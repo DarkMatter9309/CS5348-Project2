@@ -85,8 +85,6 @@ whence:
   SEEK_CUR: offset is set to its current location + offset bytes
   SEEK_END: offset is set to size of file + offset bytes
   */
-  lseek(file_descriptor, 1024, SEEK_SET);
-  write(file_descriptor, &superBlock, 1024);
 
 }
 
