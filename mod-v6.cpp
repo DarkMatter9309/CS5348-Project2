@@ -20,13 +20,6 @@ typedef struct {
 } superblock_type; // Block size is 1024 Bytes; only 1023 Bytes are used 
  
 superblock_type superBlock; 
-
-// block structure
-
-typedef struct {
-  int next_block;
-  char data[1024];
-} block_type;
  
 // i-node Structure 
  
@@ -72,52 +65,44 @@ int openfs(const char *file)
 }
 
 void initfs(int n1, int n2) {
-  block_type block_zero; // ignore
   // n2 = blocks for inodes
   // n1 = fs size in # of blocks
+  int no_of_bytes;
   superBlock.isize = n2;
   superBlock.fsize = n1;
-  // create n2/16 blocks for inodes
-  int number_of_inode_blocks = 0;
-  if(n2 % 16 == 0) {
-    number_of_inode_blocks = n2/16;
-  } else {
-    number_of_inode_blocks = ceil(n2/16);
-  }
   // data blocks = total blocks - inode blocks - super block - block 0
-  int number_of_data_blocks = n1 - number_of_inode_blocks - 2;
-  block_type memory[n1];
-  
-  /*
-  int number_of_inode_blocks = ceil(n2/16);
-  block_type inodes[number_of_inode_blocks];
-  int number_of_data_blocks = n1 - number_of_inode_blocks;
-  block_type data[number_of_data_blocks];
-  */
+  int number_of_data_blocks = n1 - n2 - 2;
+  superBlock.nfree = 0;
+  superBlock.flock = 0;
+  superBlock.ilock = 0;
+  superBlock.fmod = 0;
+  // start writing from block 2
+  lseek(file_descriptor, 2048, SEEK_SET);
+  write(file_descriptor, &superBlock, 1024);
 
-  // set all blocks to free
-  for(int i = 1; i < 251; i++) {
-    superBlock.free[i] = 0;
+  // buffer is written into block initially
+  char buffer[1024];
+  for(int i = 0; i < 1024; i++) {
+    buffer[i] = 0;
   }
-
-  // write superblock to fs
-  /*
-  off_t lseek(int fildes, off_t offset, int whence)
-fildes = file descriptor
-offset = position file offset to a particluar location in file
-whence:
-  SEEK_SET: offset is set to offset bytes
-  SEEK_CUR: offset is set to its current location + offset bytes
-  SEEK_END: offset is set to size of file + offset bytes
-  */
+  lseek(file_descriptor, 1024, SEEK_SET);
+  for(int i = 0; i < superBlock.isize; i++) {
+    write(file_descriptor, buffer, 1024);
+  }
+  for(int i = 0; i < 250; i++) {
+    superBlock.free[superBlock.nfree] = i + 2 + superBlock.isize;
+    ++superBlock.nfree;
+  }
   //closing the file_descriptor
 
-    if (close(file_descriptor) < 0) 
-    { 
+    if (close(file_descriptor) < 0)
+    {
         perror("Error Closing file");
     }
     else{
+      close(file_descriptor);
       printf("Successfully closed the File.\n");
+      return;
     }
 }
 
