@@ -64,20 +64,26 @@ int openfs(const char *file)
   return file_descriptor;
 }
 
-void initfs(int n1, int n2) {
+void initfs(int file_descriptor, int n1, int n2) {
   // n2 = blocks for inodes
   // n1 = fs size in # of blocks
-  int no_of_bytes;
   superBlock.isize = n2;
   superBlock.fsize = n1;
   // data blocks = total blocks - inode blocks - super block - block 0
-  int number_of_data_blocks = n1 - n2 - 2;
+  int first_data_block = 2 + n2;
+  int free_data_blocks = n1-n2-2;
+  for(int i = 0; i < 250; i++) {
+    superBlock.free[i] = 0;
+  }
   superBlock.nfree = 0;
-  superBlock.flock = 0;
-  superBlock.ilock = 0;
+  superBlock.flock = 'f';
+  superBlock.ilock = 'i';
   superBlock.fmod = 0;
+  superBlock.time = 0;
+
   // start writing from block 2
-  lseek(file_descriptor, 2048, SEEK_SET);
+  // write superblock into block 2
+  lseek(file_descriptor, 1024, SEEK_SET);
   write(file_descriptor, &superBlock, 1024);
 
   // buffer is written into block initially
