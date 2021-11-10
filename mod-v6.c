@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 typedef struct { 
   int isize; 
@@ -46,6 +50,17 @@ typedef struct {
 #define ISIZE = 64;
 int file_descriptor;
 
+int openfs(const char *file)
+{
+  file_descriptor=open(file, O_RDWR |  O_CREAT);
+  printf("Successfully created and opened the file %s \n", file);
+  if (file_descriptor ==-1) 
+    { 
+        perror("Error creating/opening file ");         
+    } 
+  return 0;
+}
+
 void initfs(int n1, int n2) {
   block_type block_zero; // ignore
   // n2 = blocks for inodes
@@ -85,6 +100,14 @@ whence:
   SEEK_CUR: offset is set to its current location + offset bytes
   SEEK_END: offset is set to size of file + offset bytes
   */
+  //closing the file_descriptor
 
+    if (close(file_descriptor) < 0) 
+    { 
+        perror("Error Closing file");
+    }
+    else{
+      printf("Successfully closed the File.\n");
+    }
 }
 
