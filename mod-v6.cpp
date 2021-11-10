@@ -54,8 +54,14 @@ int file_descriptor;
 
 int openfs(const char *file)
 {
-  file_descriptor=open(file, O_RDWR |  O_CREAT);
-  printf("Successfully created and opened the file %s \n", file);
+  file_descriptor=open(file, O_RDWR);
+  if (file_descriptor == -1) {
+	  file_descriptor=open(file, O_CREAT);
+	  printf("File does not already exist. Successfully created file %s\n", file);
+  }
+  else {
+	  printf("Successfully opened the file %s\n", file);
+  }
   if (file_descriptor ==-1) 
     { 
         perror("Error creating/opening file ");         
