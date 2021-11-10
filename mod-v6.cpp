@@ -86,18 +86,36 @@ void initfs(int file_descriptor, int n1, int n2) {
   lseek(file_descriptor, 1024, SEEK_SET);
   write(file_descriptor, &superBlock, 1024);
 
-  // buffer is written into block initially
+  // create a blank buffer for blank data blocks
   char buffer[1024];
   for(int i = 0; i < 1024; i++) {
     buffer[i] = 0;
   }
-  lseek(file_descriptor, 1024, SEEK_SET);
-  for(int i = 0; i < superBlock.isize; i++) {
-    write(file_descriptor, buffer, 1024);
-  }
-  for(int i = 0; i < 250; i++) {
-    superBlock.free[superBlock.nfree] = i + 2 + superBlock.isize;
-    ++superBlock.nfree;
+  // add free_data_blocks number of free blocks starting from byte 2048
+  int block_number = first_data_block;
+  int location = 2048;
+  for(int i = 0; i<free_data_blocks; i++) {
+    if(superBlock.nfree == 251) {
+      int data_block[256]
+      data_block[0] = 251;
+      for(int i = 0; i < 256; i++) {
+        if(i < 251) {
+          data_block[i+1] = superBlock.free[i];
+        }
+        else {
+          data_block[i+1] = 0;
+        }
+      }
+      lseek(file_descriptor, block_number * 1024, SEEK_SET);
+      write(file_descriptor, data_block, 1024);
+    }
+    else {
+      lseek(file_descriptor, block_number*1024, SEEK_SET);
+      write(file_desriptor, buffer, 1024);
+    }
+    superBlock.free[superBlock.nfree] = block_number;
+    superBlock.nfree++;
+    block_number++;
   }
   //closing the file_descriptor
 
