@@ -96,7 +96,7 @@ void initfs(int file_descriptor, int n1, int n2) {
   int location = 2048;
   for(int i = 0; i<free_data_blocks; i++) {
     if(superBlock.nfree == 251) {
-      int data_block[256]
+      int data_block[256];
       data_block[0] = 251;
       for(int i = 0; i < 256; i++) {
         if(i < 251) {
@@ -111,7 +111,7 @@ void initfs(int file_descriptor, int n1, int n2) {
     }
     else {
       lseek(file_descriptor, block_number*1024, SEEK_SET);
-      write(file_desriptor, buffer, 1024);
+      write(file_descriptor, buffer, 1024);
     }
     superBlock.free[superBlock.nfree] = block_number;
     superBlock.nfree++;
@@ -154,7 +154,7 @@ int main(){
 			if(openfsValid != -1){
 				int n1 = atoi(inputVector[1].c_str());
 				int n2 = atoi(inputVector[2].c_str());
-				initfs(n1,n2);
+				initfs(file_descriptor, n1,n2);
 			}else{
 				cout << "Valid openfs command needs to be give before initfs. Please try again" << endl;
 			}
