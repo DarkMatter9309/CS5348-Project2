@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <bits/stdc++.h>
+#include <time.h>
 using namespace std;
 
 typedef struct { 
@@ -41,9 +42,14 @@ typedef struct {
 } dir_type;//32 Bytes long 
 
 // global constants
-#define BLOCK_SIZE = 1024;
-#define ISIZE = 64;
+#define BLOCK_SIZE = 1024
+#define ISIZE = 64
 int file_descriptor;
+inode_type root_inode;
+dir_type rootDir;
+
+
+unsigned short allocateFreeBlock();
 
 int openfs(const char *file)
 {
@@ -63,6 +69,64 @@ int openfs(const char *file)
       } 
   return file_descriptor;
 }
+
+void create_root(){
+
+    
+    unsigned int i = 0;
+    unsigned short rootBlock = allocateFreeBlock();
+
+   unsigned short write_size;
+    for (i=0;i<28;i++)
+       rootDir.filename[i] = 0;
+
+    rootDir.filename[0] = '.';                       
+    rootDir.filename[1] = '\0';
+    rootDir.inode = 1;                                       
+    
+     root_inode.flags = 0100000 | 040000 | 000077;
+     root_inode.nlinks = 2;
+     root_inode.uid = '0';
+     root_inode.gid = '0';
+     root_inode.size0 = '0';
+     root_inode.size1 = 64;
+     root_inode.addr[0] = rootBlock;
+    
+     for (i=1;i<9;i++)
+       root_inode.addr[i] = 0;
+
+    root_inode.actime= time(0);
+    root_inode.modtime=time(0);
+
+    
+    
+    lseek(file_descriptor , 2048 , SEEK_SET);
+    write(file_descriptor , &root_inode , 64);
+    lseek(file_descriptor, rootBlock* 1024, SEEK_SET);
+
+    //filling . as the first entry in root;
+    write_size = write(file_descriptor, &rootDir, 32);
+
+
+    // Filling .. as the next entry in root
+    rootDir.filename[0] = '.';
+    rootDir.filename[1] = '.';
+    rootDir.filename[2] = '\0';
+    write(file_descriptor, &rootDir, 32);
+    
+    
+}
+
+
+
+unsigned short allocateFreeBlock()
+  {
+  unsigned short freeBlock;
+  freeBlock = superBlock.free[--superBlock.nfree];
+  superBlock.free[superBlock.nfree] = 0;
+
+  return freeBlock;
+  }
 
 void initfs(int file_descriptor, int n1, int n2) {
   // n2 = blocks for inodes
@@ -118,7 +182,7 @@ void initfs(int file_descriptor, int n1, int n2) {
     block_number++;
   }
   //closing the file_descriptor
-
+create_root();
     if (close(file_descriptor) < 0)
     {
         perror("Error Closing file");
@@ -131,39 +195,39 @@ void initfs(int file_descriptor, int n1, int n2) {
 }
 
 int main(){
-	int finished = 0;
-	vector<string> userInputsVector;
-	string userInput;
-	int openfsValid = 0;
-	while(!finished){
-		cout << "Enter user command! (you can exit by typing q)" << endl;
-		getline (cin, userInput);
-		userInputsVector.push_back(userInput);
-		if(userInput == "q"){
-			cout << "The program will now exit" << endl;
-			exit(0);
-		}
-		
-    	istringstream iss(userInput);
-    	vector<string> inputVector;
-    	for(string s;iss>>s;)
-        	inputVector.push_back(s);
+  int finished = 0;
+  vector<string> userInputsVector;
+  string userInput;
+  int openfsValid = 0;
+  while(!finished){
+    cout << "Enter user command! (you can exit by typing q)" << endl;
+    getline (cin, userInput);
+    userInputsVector.push_back(userInput);
+    if(userInput == "q"){
+      cout << "The program will now exit" << endl;
+      exit(0);
+    }
+    
+      istringstream iss(userInput);
+      vector<string> inputVector;
+      for(string s;iss>>s;)
+          inputVector.push_back(s);
         if(inputVector[0] == "openfs"){
-			openfsValid = openfs(inputVector[1].c_str());
-		}else if(inputVector[0] == "initfs"){
-			if(openfsValid != -1){
-				int n1 = atoi(inputVector[1].c_str());
-				int n2 = atoi(inputVector[2].c_str());
-				initfs(file_descriptor, n1,n2);
-			}else{
-				cout << "Valid openfs command needs to be give before initfs. Please try again" << endl;
-			}
-			
-		}else{
-			cout << "Invalid Input! Please try again." << endl;
-		}
-	}
-	return 0;
+      openfsValid = openfs(inputVector[1].c_str());
+    }else if(inputVector[0] == "initfs"){
+      if(openfsValid != -1){
+        int n1 = atoi(inputVector[1].c_str());
+        int n2 = atoi(inputVector[2].c_str());
+        initfs(file_descriptor, n1,n2);
+      }else{
+        cout << "Valid openfs command needs to be give before initfs. Please try again" << endl;
+      }
+      
+    }else{
+      cout << "Invalid Input! Please try again." << endl;
+    }
+  }
+  return 0;
 }
 
 
