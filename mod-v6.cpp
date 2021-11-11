@@ -1,3 +1,45 @@
+/*
+Group-9 Project2-Part1
+
+Team Members and Contributions
+
+Ameya Potey (ANP200000) - Worked on appending the root directory and inodes along with a few file operations
+Li Wang (li.wang2@utdallas.edu) - Worked on defining the file system and all its internals with Tejo Vardhan
+Tejo Vardhan (txm200002) -  Worked on defining the file system and all its internals with Li and also worked on integrating all the modules.
+
+Instructions to compiler and run the program on cslab:
+Go to the file location
+>run g++ -o result mod-v6.cpp //you can replace result with a word of your choice
+>run ./result to start
+You should see the below message once you start the program succesfully:
+
+
+
+Welcome User!
+You can exit anytime by typing q
+You cannot give initfs before a valid openfs command is given
+You can give the following commands to try this program. Order needs to be followed
+
+
+
+1>openfs //filename should not be an existing file name
+2>initfs n1 n2 //where n1 and n2 need to be positive integers, invalid n1 and n2 values will lead to error
+3>openfs //and try initfs n1 n2 again for your new file
+3>q //or q to quit Enter user command!)
+
+
+
+For example:
+>openfs project2part1
+>initfs 100 50
+>q
+
+
+
+You should see a file with the given filename in the openfs command, in the same directory after the program has completed executing.
+
+*/
+
 #include <stdio.h>
 
 #include <stdlib.h>
