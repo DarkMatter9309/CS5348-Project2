@@ -41,15 +41,13 @@ typedef struct {
   char filename[28]; 
 } dir_type;//32 Bytes long 
 
-// global constants
-#define BLOCK_SIZE = 1024
-#define ISIZE = 64
+
 int file_descriptor;
-inode_type root_inode;
-dir_type rootDir;
+inode_type root_inode; // to store inode for the root
+dir_type rootDir;     //to stpr
+ unsigned int i = 0;  //loop counter
 
-
-unsigned short allocateFreeBlock(); // Function to get a free block
+unsigned short getFreeBlock();
 
 int openfs(const char *file)
 {
@@ -57,7 +55,7 @@ int openfs(const char *file)
   if( access( file, F_OK ) == 0 ) {
         printf("File Already exists!! Please select a new filename \n");
     } else {
-        file_descriptor=open(file, O_RDWR |  O_CREAT);
+        file_descriptor=open(file, O_RDWR |  O_CREAT, S_IRUSR | S_IWUSR);
   
       if (file_descriptor ==-1) 
           { 
@@ -71,14 +69,8 @@ int openfs(const char *file)
 }
 
 void create_root(){
-
-    
-    unsigned int i = 0;
-    unsigned short rootBlock = allocateFreeBlock();
-   unsigned short write_size;
-    for (i=0;i<28;i++)
-       rootDir.filename[i] = 0;
-
+   
+    unsigned short rootBlock = getFreeBlock();
     rootDir.filename[0] = '.';                       
     rootDir.filename[1] = '\0';
     rootDir.inode = 1;                                       
@@ -90,22 +82,15 @@ void create_root(){
      root_inode.size0 = 0;
      root_inode.size1 = 0;
      root_inode.addr[0] = rootBlock;
-    
-     for (i=1;i<9;i++)
-       root_inode.addr[i] = 0;
-
     root_inode.actime= time(0);
     root_inode.modtime=time(0);
 
-    
-    
     lseek(file_descriptor , 2048 , SEEK_SET);
     write(file_descriptor , &root_inode , 64);
     lseek(file_descriptor, rootBlock* 1024, SEEK_SET);
 
     //filling . as the first entry in root;
-    write_size = write(file_descriptor, &rootDir, 32);
-
+    write(file_descriptor, &rootDir, 32);
 
     // Filling .. as the next entry in root
     rootDir.filename[0] = '.';
@@ -113,18 +98,17 @@ void create_root(){
     rootDir.filename[2] = '\0';
     write(file_descriptor, &rootDir, 32);
     
-    printf("Initailized root directory Successfully!!\n");
+    printf("Initailized the root directory and its inode Successfully!!\n");
     
 }
 
 
 
-unsigned short allocateFreeBlock()
+unsigned short getFreeBlock()
   {
   unsigned short freeBlock;
   freeBlock = superBlock.free[--superBlock.nfree];
   superBlock.free[superBlock.nfree] = 0;
-
   return freeBlock;
   }
 
@@ -182,7 +166,7 @@ void initfs(int file_descriptor, int n1, int n2) {
     block_number++;
   }
   //closing the file_descriptor
-    create_root(); // Initializing the root and adding the first inode
+create_root();
     if (close(file_descriptor) < 0)
     {
         perror("Error Closing file");
@@ -217,7 +201,7 @@ int main(){
     }else if(inputVector[0] == "initfs"){
       if(openfsValid != -1){
         int n1 = atoi(inputVector[1].c_str());
-        int n2 = atoi(inputVector[2].c_str());
+        int n2 = atoi(inputVector[2].c_str());  
         initfs(file_descriptor, n1,n2);
       }else{
         cout << "Valid openfs command needs to be give before initfs. Please try again" << endl;
