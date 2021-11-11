@@ -75,7 +75,6 @@ void create_root(){
     
     unsigned int i = 0;
     unsigned short rootBlock = allocateFreeBlock();
-
    unsigned short write_size;
     for (i=0;i<28;i++)
        rootDir.filename[i] = 0;
@@ -84,12 +83,12 @@ void create_root(){
     rootDir.filename[1] = '\0';
     rootDir.inode = 1;                                       
     
-     root_inode.flags = 0100000 | 040000 | 000077;
+     root_inode.flags = 00;
      root_inode.nlinks = 2;
-     root_inode.uid = '0';
-     root_inode.gid = '0';
-     root_inode.size0 = '0';
-     root_inode.size1 = 64;
+     root_inode.uid = 0;
+     root_inode.gid = 0;
+     root_inode.size0 = 0;
+     root_inode.size1 = 0;
      root_inode.addr[0] = rootBlock;
     
      for (i=1;i<9;i++)
@@ -114,6 +113,7 @@ void create_root(){
     rootDir.filename[2] = '\0';
     write(file_descriptor, &rootDir, 32);
     
+    printf("Initailized root directory Successfully!!\n");
     
 }
 
@@ -189,7 +189,7 @@ create_root();
     }
     else{
       close(file_descriptor);
-      printf("Successfully closed the File.\n");
+      printf("Successfully completed Initializing the modified V-6 file system!!\n");
       return;
     }
 }
