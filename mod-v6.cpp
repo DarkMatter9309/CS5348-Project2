@@ -124,6 +124,10 @@ void initfs(int file_descriptor, int n1, int n2) {
     printf("Please specify a file to intialize the modified V-6 file system in!!\n");
     return;
   }
+  if(n1==0 || n2 ==0 || n1<n2){
+    printf("Invalid inputs for the initfs command!! Please give valid inputs!!\n");
+    return;
+   }
   // n2 = blocks for inodes
   // n1 = fs size in # of blocks
   superBlock.isize = n2;
