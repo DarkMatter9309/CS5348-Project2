@@ -65,6 +65,7 @@ int openfs(const char *file)
             printf("\n");
           }
       } 
+  
   return file_descriptor;
 }
 
@@ -113,6 +114,11 @@ unsigned short getFreeBlock()
   }
 
 void initfs(int file_descriptor, int n1, int n2) {
+  if(file_descriptor !=3){
+
+      printf("Please specify a file to intialize the modified V-6 file system in!!\n");
+      return;
+   }
   // n2 = blocks for inodes
   // n1 = fs size in # of blocks
   superBlock.isize = n2;
