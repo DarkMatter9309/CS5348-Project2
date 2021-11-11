@@ -49,7 +49,7 @@ inode_type root_inode;
 dir_type rootDir;
 
 
-unsigned short allocateFreeBlock();
+unsigned short allocateFreeBlock(); // Function to get a free block
 
 int openfs(const char *file)
 {
@@ -182,7 +182,7 @@ void initfs(int file_descriptor, int n1, int n2) {
     block_number++;
   }
   //closing the file_descriptor
-create_root();
+    create_root(); // Initializing the root and adding the first inode
     if (close(file_descriptor) < 0)
     {
         perror("Error Closing file");
