@@ -95,11 +95,31 @@ inode_type root_inode; // to store inode for the root
 dir_type rootDir; //to stpr
 unsigned int i = 0; //loop counter
 
-unsigned short getFreeBlock();
-// void createDirectory(const char * dirName);
+unsigned int getFreeBlock();
+void createDirectory(const char * dirName, int iNodeNumber);
 unsigned int getInode();
 
+void createDirectory(const char * dirName, int iNodeNumber){
+  inode_type dirInode;
+  dir_type dir;
+  unsigned int iNodeNum = iNodeNumber;
+  unsigned int dirBlock = getFreeBlock();
 
+
+  dirInode.flags = 00;
+  dirInode.nlinks = 2;
+  dirInode.uid = 0;
+  dirInode.gid = 0;
+  dirInode.size0 = 0;
+  dirInode.size1 = 0;
+  dirInode.addr[0] = dirBlock;
+  dirInode.actime = time(0);
+  dirInode.modtime = time(0);
+
+  lseek(file_descriptor, 2048 + (iNodeNumber-1)*64, SEEK_SET);
+
+
+}
 
 int openfs(const char * file) {
 
@@ -121,7 +141,7 @@ int openfs(const char * file) {
 
 void create_root() {
 
-  unsigned short rootBlock = getFreeBlock();
+  unsigned int rootBlock = getFreeBlock();
   rootDir.filename[0] = '.';
   rootDir.filename[1] = '\0';
   rootDir.inode = 1;
@@ -159,16 +179,22 @@ unsigned int getInode(){
   unsigned short buf;
   lseek(file_descriptor, 2050, SEEK_SET);
   read(file_descriptor, &buf, 2);
-  while( buf>=1){
+  while( buf>=1 && count<= (superBlock.isize*1024)/64){
     lseek(file_descriptor, 64, SEEK_SET);
     read(file_descriptor, &buf, 2);
     count = count+1;
   }
-  return count;
+  if(count ==  (superBlock.isize*1024)/64){
+    return -1;
+  }
+  else{
+    return count;
+  }
+  
 }
 
-unsigned short getFreeBlock() {
-  unsigned short freeBlock;
+unsigned int getFreeBlock() {
+  unsigned int freeBlock;
   freeBlock = superBlock.free[--superBlock.nfree];
   superBlock.free[superBlock.nfree] = 0;
   return freeBlock;
@@ -288,10 +314,10 @@ int main() {
     else if (inputVector[0] == "mkdir"){
         if (openfsValid != -1) {
           unsigned int dirInode = getInode();
-          printf("Inode number: %d\n",dirInode);
-          // if(dirInode < 0){
-          //   printf("No inodes left!! Please try again !\n");
-          // }
+          // printf("Inode number: %d\n",dirInode);
+          if(dirInode == -1){
+            printf("No inodes left!! Please try again !\n");
+          }
           if(access(inputVector[1].c_str(),R_OK)==0){
             printf("The Directory already exists! Please try again!\n");
           }
