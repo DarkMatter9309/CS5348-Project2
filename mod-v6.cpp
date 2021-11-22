@@ -96,6 +96,10 @@ dir_type rootDir; //to stpr
 unsigned int i = 0; //loop counter
 
 unsigned short getFreeBlock();
+// void createDirectory(const char * dirName);
+unsigned int getInode();
+
+
 
 int openfs(const char * file) {
 
@@ -133,7 +137,7 @@ void create_root() {
   root_inode.modtime = time(0);
 
   lseek(file_descriptor, 2048, SEEK_SET);
-  write(file_descriptor, & root_inode, 64);
+  write(file_descriptor, &root_inode, 64);
   lseek(file_descriptor, rootBlock * 1024, SEEK_SET);
 
   //filling . as the first entry in root;
@@ -147,6 +151,20 @@ void create_root() {
 
   printf("Initailized the root directory and its inode Successfully!!\n");
 
+
+}
+
+unsigned int getInode(){
+  int count=1;
+  unsigned short buf;
+  lseek(file_descriptor, 2050, SEEK_SET);
+  read(file_descriptor, &buf, 2);
+  while( buf>=1){
+    lseek(file_descriptor, 64, SEEK_SET);
+    read(file_descriptor, &buf, 2);
+    count = count+1;
+  }
+  return count;
 }
 
 unsigned short getFreeBlock() {
@@ -217,13 +235,13 @@ void initfs(int file_descriptor, int n1, int n2) {
   }
   //closing the file_descriptor
   create_root();
-  if (close(file_descriptor) < 0) {
-    perror("Error Closing file");
-  } else {
-    close(file_descriptor);
-    printf("Successfully completed Initializing the modified V-6 file system!!\n");
-    return;
-  }
+  // if (close(file_descriptor) < 0) {
+  //   perror("Error Closing file");
+  // } else {
+  //   close(file_descriptor);
+  //   printf("Successfully completed Initializing the modified V-6 file system!!\n");
+  //   return;
+  // }
 }
 
 int main() {
@@ -239,7 +257,7 @@ int main() {
   string userInput;
   int openfsValid = 0;
   while (!finished) {
-    cout << "Enter user command!)" << endl;
+    cout << "Enter user command!" << endl;
     getline(cin, userInput);
     userInputsVector.push_back(userInput);
     if (userInput == "q") {
@@ -266,7 +284,24 @@ int main() {
         cout << "Valid openfs command needs to be give before initfs. Please try again!" << endl;
       }
 
-    } else {
+    } 
+    else if (inputVector[0] == "mkdir"){
+        if (openfsValid != -1) {
+          unsigned int dirInode = getInode();
+          printf("Inode number: %d\n",dirInode);
+          // if(dirInode < 0){
+          //   printf("No inodes left!! Please try again !\n");
+          // }
+          if(access(inputVector[1].c_str(),R_OK)==0){
+            printf("The Directory already exists! Please try again!\n");
+          }
+          else{
+            //createDirectory(inputVector[1].c_str());
+          }
+        }
+
+    }
+    else {
       cout << "Invalid Input! Please try again.!" << endl;
     }
   }
