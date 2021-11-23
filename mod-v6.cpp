@@ -402,10 +402,10 @@ unsigned int allocateFreeBlock() {
     return free_address;
 }
 
-void smallFile(char* externalfile, char* v6_file, int blocks_needed, int file_size) {
+void smallFile(char* externalfile, char* v6_file, int needed_blocks, int file_size) {
   inode_type new_inode;
   unsigned int free_address = allocateFreeBlock();
-  for(int i = 0; i < blocks_needed; i++) {
+  for(int i = 0; i < needed_blocks; i++) {
     new_inode.free[i] = allocateFreeBlock();
   }
   new_inode.flags = 0100000;
@@ -414,17 +414,17 @@ void smallFile(char* externalfile, char* v6_file, int blocks_needed, int file_si
   new_inode.actime = 0;
   new_inode.modtime = 0;
   unsigned short buffer[512];
-  externalfile_fd = open(externalfile, O_RDONLY);
-	v6_fd = open(v6_file, O_RDWR | O_APPEND);
-	for(j =0; j<=blocks_allocated; j++) {
-		lseek(externalfile_fd, 512*j , SEEK_SET);
-		read(externalfile_fd ,&buffer , 512);
-		lseek(v6_fd, 512*(inode.addr[j]) , SEEK_SET);
-		write(v6_fd, &buffer , 512);
+  int externalfile_fd = open(externalfile, O_RDONLY);
+  int v6_fd = open(v6_file, O_RDWR | O_APPEND);
+  for(j =0; j<=needed_blocks; j++) {
+	  lseek(externalfile_fd, 512*j , SEEK_SET);
+	  read(externalfile_fd ,&buffer , 512);
+	  lseek(v6_fd, 512*(inode.addr[j]) , SEEK_SET);
+	  write(v6_fd, &buffer , 512);
 	}
-	printf("Small file copied\n");
-	close(v6_fd);
-	close(externalfile_fd);
+  printf("Small file copied\n");
+  close(v6_fd);
+  close(externalfile_fd);
 
 }
 
