@@ -364,17 +364,44 @@ unsigned int getNewInode(){
   }
   
 }
+void cpout(char* externalfile, char* v6_file) {
+  struct stat stats;
+  stat(v6_file, &stats);
+  int needed_blocks = stats.st_blocks;
+
+  out_smallFile(externalfile, v6_file, needed_blocks);
+}
+
+void out_smallfile(char* externalfile, char* v6_file, int needed_blocks) {
+  unsigned short buffer[512];
+  int v6_fd = open(v6_file, O_RDONLY);
+  unsigned short addr[8];
+  lseek(v6_fd, , SEEK_SET);
+  read(fdes, &addr, 16);
+  close(v6_fd);
+  int externalfile_fd = creat(externalfile, 0775);
+  externalfile_fd = open(externalfile, O_RDWR | O_APPEND);
+  v6_fd = open(v6_file, O_RDONLY);
+  for(int i = 0; i < needed_blocks; i++) {
+    lseek(v6_fd, i*1024, SEEK_SET);
+    read(v6_fd, &buffer, 1024);
+    lseek(externalfile_fd, i*1024, SEEK_SET);
+    write(externalfile_fd, &buffer, 1024);
+  }
+  close(externalfile_fd);
+  close(v6_fd);
+}
+
 
 void cpin(char* externalfile, char* v6_file) {
-  // stat struct provides information about file such as number of blocks needed
+  // stat struct provides information about file such as number of blocks needed and file size
   struct stat stats;
   stat(externalfile, &stats);
   int needed_blocks = stats.st_blocks;
   int file_size = stats.st_size;
 
-  smallFile(externalfile, v6_file, needed_blocks, file_size);
+  in_smallFile(externalfile, v6_file, needed_blocks, file_size);
 }
-
 unsigned int allocateFreeBlock() {
   unsigned int free_address;
   unsigned int buffer[512];
@@ -391,8 +418,8 @@ unsigned int allocateFreeBlock() {
     } else {
       int next_free_block = superBlock.free[nfree];
       int free_block_address = next_free_block * 1024 + 2048 + superBlock.isize*1024;
-      lseek(file_descriptor, free_block_address, 512);
-      read(file_descriptor, buffer, 512);
+      lseek(file_descriptor, free_block_address, 1024);
+      read(file_descriptor, buffer, 1024);
       superBlock.nfree = buffer[0];
       for(int i = 0; i < 251; i++) {
         superBlock.free[i] = buffer[i+1];
@@ -402,10 +429,10 @@ unsigned int allocateFreeBlock() {
     return free_address;
 }
 
-void smallFile(char* externalfile, char* v6_file, int needed_blocks, int file_size) {
+void in_smallFile(char* externalfile, char* v6_file, int needed_blocks, int file_size) {
   inode_type new_inode;
   unsigned int free_address = allocateFreeBlock();
-  for(int i = 0; i < needed_blocks; i++) {
+  for(int i = 0; i < blocks_needed; i++) {
     new_inode.free[i] = allocateFreeBlock();
   }
   new_inode.flags = 0100000;
@@ -414,20 +441,18 @@ void smallFile(char* externalfile, char* v6_file, int needed_blocks, int file_si
   new_inode.actime = 0;
   new_inode.modtime = 0;
   unsigned short buffer[512];
-  int externalfile_fd = open(externalfile, O_RDONLY);
-  int v6_fd = open(v6_file, O_RDWR | O_APPEND);
-  for(j =0; j<=needed_blocks; j++) {
-	  lseek(externalfile_fd, 512*j , SEEK_SET);
-	  read(externalfile_fd ,&buffer , 512);
-	  lseek(v6_fd, 512*(inode.addr[j]) , SEEK_SET);
-	  write(v6_fd, &buffer , 512);
+  externalfile_fd = open(externalfile, O_RDONLY);
+	v6_fd = open(v6_file, O_RDWR | O_APPEND);
+	for(int i = 0; i <= needed_blocks; i++) {
+	  lseek(externalfile_fd, 1024*i , SEEK_SET);
+	  read(externalfile_fd, &buffer, 1024);
+	  lseek(v6_fd, 1024*(new_inode.addr[i]) , SEEK_SET);
+	  write(v6_fd, &buffer, 1024);
 	}
-  printf("Small file copied\n");
-  close(v6_fd);
-  close(externalfile_fd);
-
+	printf("Small file copied\n");
+	close(v6_fd);
+	close(externalfile_fd);
 }
-
 unsigned int getFreeBlock() {
   unsigned int freeBlock;
   freeBlock = superBlock.free[--superBlock.nfree];
