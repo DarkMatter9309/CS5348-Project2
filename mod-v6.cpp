@@ -284,7 +284,6 @@ void mkDir( const char * dirName, int iNodeNumber){
         }
         if(currNode != -1){
           createDirectory(currNode,prevNode,finalDirName,iNodeNumber);
-          printf("prevNode: %d\n",prevNode);
         }
      }
     
