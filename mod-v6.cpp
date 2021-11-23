@@ -365,6 +365,69 @@ unsigned int getNewInode(){
   
 }
 
+void cpin(char* externalfile, char* v6_file) {
+  // stat struct provides information about file such as number of blocks needed
+  struct stat stats;
+  stat(externalfile, &stats);
+  int needed_blocks = stats.st_blocks;
+  int file_size = stats.st_size;
+
+  smallFile(externalFile, v6_file, needed_blocks, file_size);
+}
+
+unsigned int allocateFreeBlock() {
+  unsigned int free_address;
+  unsigned int buffer[512];
+  for(int i = 0; i < needed_blocks; i++) {
+    superBlock.nfree--;
+    if(superBlock.nfree > 0) {
+      if(superBlock.free[nfree] == 0) {
+        printf("Error, file system is full");
+        return;
+      }
+      else {
+        free_address = superBlock.free[nfree];
+      }
+    } else {
+      int next_free_block = superBlock.free[nfree];
+      int free_block_address = next_free_block * 1024 + 2048 + superBlock.isize*1024;
+      lseek(file_descriptor, free_block_address, 512);
+      read(file_descriptor, buffer, 512);
+      superBlock.nfree = buffer[0];
+      for(int i = 0; i < 251; i++) {
+        superBlock.free[i] = buffer[i+1];
+      }
+      free_address = superBlock.free[nfree];
+    }
+    return free_address;
+}
+
+void smallFile(char* externalfile, char* v6_file, int blocks_needed, int file_size) {
+  inode_type new_inode;
+  unsigned int free_address = allocateFreeBlock();
+  for(int i = 0; i < blocks_needed; i++) {
+    new_inode.free[i] = allocateFreeBlock();
+  }
+  new_inode.flags = 0100000;
+  new_inode.size0 = 0;
+  new_inode.size1 = file_size;
+  new_inode.actime = 0;
+  new_inode.modtime = 0;
+  unsigned short buffer[512];
+  externalfile_fd = open(externalfile, O_RDONLY);
+	v6_fd = open(v6_file, O_RDWR | O_APPEND);
+	for(j =0; j<=blocks_allocated; j++) {
+		lseek(externalfile_fd, 512*j , SEEK_SET);
+		read(externalfile_fd ,&buffer , 512);
+		lseek(v6_fd, 512*(inode.addr[j]) , SEEK_SET);
+		write(v6_fd, &buffer , 512);
+	}
+	printf("Small file copied\n");
+	close(v6_fd);
+	close(externalfile_fd);
+
+}
+
 unsigned int getFreeBlock() {
   unsigned int freeBlock;
   freeBlock = superBlock.free[--superBlock.nfree];
