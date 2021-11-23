@@ -53,6 +53,10 @@ You should see a file with the given filename in the openfs command, in the same
 
 #include <time.h>
 
+#include <libgen.h>
+
+#include <string.h>
+
 using namespace std;
 
 typedef struct {
@@ -94,30 +98,197 @@ int file_descriptor;
 inode_type root_inode; // to store inode for the root
 dir_type rootDir; //to stpr
 unsigned int i = 0; //loop counter
+char currPath[80];
+
+int currInode = 1;
 
 unsigned int getFreeBlock();
-void createDirectory(const char * dirName, int iNodeNumber);
+void mkDir( const char * dirName, int iNodeNumber);
 unsigned int getInode();
 
-void createDirectory(const char * dirName, int iNodeNumber){
-  inode_type dirInode;
+
+
+void createDirectory(int currInode,int prev, const char * dirName,  int iNodeNumber){
+  int startAdd;
   dir_type dir;
-  unsigned int iNodeNum = iNodeNumber;
-  unsigned int dirBlock = getFreeBlock();
+  unsigned int inode = currInode;
+  char tempFileName[28];
+  int flag =1;
+    lseek(file_descriptor, 2048 + (inode-1)*64 +20, SEEK_SET);
+    read(file_descriptor,&startAdd, 4);
+    lseek(file_descriptor,startAdd*1024 , SEEK_SET);
+    int runningInode ;
+    int rcount=0;
+    read(file_descriptor,&runningInode, 4);
+    
+    while(runningInode > 0){
+      //lseek(file_descriptor, 4, SEEK_CUR);
+      read(file_descriptor,&tempFileName,28);
+      // printf("File Name : %s\n",tempFileName);
+      if(strcmp(tempFileName,dirName)==0){
+        printf("Directory Already Exists!!\n");
+        flag =0;
+      }
+      rcount++;
+      read(file_descriptor,&runningInode, 4);
+    }
+    if(flag ==1){
+       unsigned int dirBlock = getFreeBlock();
+      strcpy(dir.filename,dirName);
+     dir.inode = iNodeNumber;
+     lseek(file_descriptor,startAdd*1024 +rcount*32 , SEEK_SET);
+     write(file_descriptor,&dir, 32);
 
+     inode_type dirInode;
 
-  dirInode.flags = 00;
-  dirInode.nlinks = 2;
-  dirInode.uid = 0;
-  dirInode.gid = 0;
-  dirInode.size0 = 0;
-  dirInode.size1 = 0;
-  dirInode.addr[0] = dirBlock;
-  dirInode.actime = time(0);
-  dirInode.modtime = time(0);
+    dirInode.flags = 0b1100110000000000;
+    dirInode.nlinks = 2;
+    dirInode.uid = 0;
+    dirInode.gid = 0;
+    dirInode.size0 = 0;
+    dirInode.size1 = 0;
+    dirInode.addr[0] = dirBlock;
+    dirInode.actime = time(0);
+    dirInode.modtime = time(0);
 
-  lseek(file_descriptor, 2048 + (iNodeNumber-1)*64, SEEK_SET);
+    lseek(file_descriptor, 2048 + (iNodeNumber-1)*64, SEEK_SET);
+    int bytes = write(file_descriptor, &dirInode, 64);
 
+    dir.filename[0] = '.';
+    dir.filename[1] = '\0';
+    dir.inode = iNodeNumber;
+
+    lseek(file_descriptor, dirBlock*1024, SEEK_SET);
+    write(file_descriptor, &dir, 32);
+
+    dir.filename[0] = '.';
+    dir.filename[1] = '.';
+    dir.filename[2] = '\0';
+    dir.inode = prev;
+
+    write(file_descriptor, &dir, 32);
+    printf("Directory Created Successfully!!\n");
+    }
+     
+    
+}
+unsigned int getInode(char * filename, unsigned int prevInode){
+  char tempFileName[28];
+  unsigned int  startAdd;
+    lseek(file_descriptor, 2048 + (prevInode-1)*64 +20, SEEK_SET);
+    read(file_descriptor,&startAdd, 4);
+    lseek(file_descriptor,startAdd*1024 , SEEK_SET);
+    unsigned int runningInode ;
+    read(file_descriptor,&runningInode, 4);
+     while(runningInode > 0){
+      read(file_descriptor,&tempFileName,28);
+      if(strcmp(tempFileName,filename)==0){
+        return runningInode;
+      }
+      read(file_descriptor,&runningInode, 4);
+     }
+      printf("No directory called %s found!! \n",filename);
+    return -1;
+}
+void chanegDirectory(const char * dirName){
+  char str[80];
+  strcpy(str, dirName);
+  if(strcmp(dirName, "/")==0){
+    strcpy(currPath,"/");
+    currInode=1;
+    printf("Directory changed to root!!\n");
+  }
+  else if(str[0] != '/'){
+    char* finalDirName = basename(str);
+      char* filename = strtok(str, "/");
+     unsigned int currNode = getInode(filename,currInode);
+     unsigned int prevNode = currNode;
+     if( currNode != -1){
+        while (filename != NULL && currNode != -1) {
+          filename = strtok(NULL, "/");
+            if(filename != NULL)
+            currNode = getInode(filename,currNode);
+        }
+        if(currNode != -1){
+          strcpy(currPath,dirName);
+          printf("current directory succesfully changed to %s\n",currPath);
+         currInode = currNode;
+        }
+     }
+  }
+  else{
+      char* finalDirName = basename(str);
+      char* filename = strtok(str, "/");
+     unsigned int currNode = getInode(filename,1);
+     unsigned int prevNode = currNode;
+     if( currNode != -1){
+        while (filename != NULL && currNode != -1) {
+          filename = strtok(NULL, "/");
+            if(filename != NULL)
+            currNode = getInode(filename,currNode);
+        }
+        if(currNode != -1){
+          strcpy(currPath,dirName);
+          printf("current directory succesfully changed to %s\n",currPath);
+         currInode = currNode;
+        }
+     }
+  }
+}
+void mkDir( const char * dirName, int iNodeNumber){
+  int num;
+  char str[80];
+  char tempFileName[28];
+  
+  char relPath[80];
+  strcpy(str, dirName);
+  
+  if(str[0] != '/'){
+          if(strchr(str,'/')!=NULL){
+              char* finalDirName = basename(str);
+              char* filename = strtok(str, "/");
+             unsigned int currNode = getInode(filename,currInode);
+             unsigned int prevNode = currNode;
+             if( currNode != -1){
+                while (filename != NULL) {
+                  filename = strtok(NULL, "/");
+                    if(strcmp(filename,finalDirName)==0)
+                      break;
+                    prevNode = currNode;
+                    currNode = getInode(filename,currNode);
+                }
+                if(currNode != -1){
+                  createDirectory(currNode,prevNode,finalDirName,iNodeNumber);
+                  
+                }
+             }
+          }
+          else{
+            createDirectory(currInode,currInode, dirName,iNodeNumber); 
+          }
+           
+    }
+  
+  else{
+      char* finalDirName = basename(str);
+      char* filename = strtok(str, "/");
+     unsigned int currNode = getInode(filename,1);
+     unsigned int prevNode = currNode;
+     if( currNode != -1){
+        while (filename != NULL) {
+          filename = strtok(NULL, "/");
+            if(strcmp(filename,finalDirName)==0)
+              break;
+            prevNode = currNode;
+            currNode = getInode(filename,currNode);
+        }
+        if(currNode != -1){
+          createDirectory(currNode,prevNode,finalDirName,iNodeNumber);
+          printf("prevNode: %d\n",prevNode);
+        }
+     }
+    
+  }
 
 }
 
@@ -131,7 +302,7 @@ int openfs(const char * file) {
     if (file_descriptor == -1) {
       perror("Error creating/opening file ");
     } else {
-      printf("Successfully created/opened the file %s", file);
+      printf("Successfully created/opened  the file %s", file);
       printf("\n");
     }
   }
@@ -141,12 +312,13 @@ int openfs(const char * file) {
 
 void create_root() {
 
+
   unsigned int rootBlock = getFreeBlock();
   rootDir.filename[0] = '.';
   rootDir.filename[1] = '\0';
   rootDir.inode = 1;
 
-  root_inode.flags = 00;
+  root_inode.flags = 0b1100110000000000;
   root_inode.nlinks = 2;
   root_inode.uid = 0;
   root_inode.gid = 0;
@@ -174,13 +346,14 @@ void create_root() {
 
 }
 
-unsigned int getInode(){
+unsigned int getNewInode(){
   int count=1;
   unsigned short buf;
   lseek(file_descriptor, 2050, SEEK_SET);
   read(file_descriptor, &buf, 2);
+
   while( buf>=1 && count<= (superBlock.isize*1024)/64){
-    lseek(file_descriptor, 64, SEEK_SET);
+    lseek(file_descriptor, 62, SEEK_CUR);
     read(file_descriptor, &buf, 2);
     count = count+1;
   }
@@ -261,6 +434,7 @@ void initfs(int file_descriptor, int n1, int n2) {
   }
   //closing the file_descriptor
   create_root();
+  strcpy(currPath,"/");
   // if (close(file_descriptor) < 0) {
   //   perror("Error Closing file");
   // } else {
@@ -313,20 +487,22 @@ int main() {
     } 
     else if (inputVector[0] == "mkdir"){
         if (openfsValid != -1) {
-          unsigned int dirInode = getInode();
+          unsigned int dirInode = getNewInode();
           // printf("Inode number: %d\n",dirInode);
           if(dirInode == -1){
             printf("No inodes left!! Please try again !\n");
           }
-          if(access(inputVector[1].c_str(),R_OK)==0){
-            printf("The Directory already exists! Please try again!\n");
-          }
           else{
-            //createDirectory(inputVector[1].c_str());
+          mkDir(inputVector[1].c_str(),dirInode);
           }
         }
 
     }
+    else if (inputVector[0] == "cd"){
+        if (openfsValid != -1) {
+          chanegDirectory(inputVector[1].c_str());
+          }
+        }
     else {
       cout << "Invalid Input! Please try again.!" << endl;
     }
