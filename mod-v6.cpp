@@ -372,7 +372,7 @@ void cpin(char* externalfile, char* v6_file) {
   int needed_blocks = stats.st_blocks;
   int file_size = stats.st_size;
 
-  smallFile(externalFile, v6_file, needed_blocks, file_size);
+  smallFile(externalfile, v6_file, needed_blocks, file_size);
 }
 
 unsigned int allocateFreeBlock() {
