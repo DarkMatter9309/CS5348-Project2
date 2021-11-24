@@ -69,11 +69,11 @@ typedef struct {
   char fmod;
   unsigned int time;
 }
-superblock_type; // Block size is 1024 Bytes; only 1023 Bytes are used 
+superblock_type; // Block size is 1024 Bytes; only 1023 Bytes are used
 
 superblock_type superBlock;
 
-// i-node Structure 
+// i-node Structure
 
 typedef struct {
   unsigned short flags;
@@ -86,13 +86,17 @@ typedef struct {
   unsigned int actime;
   unsigned int modtime;
 }
-inode_type; //64 Bytes in size 
+inode_type; //64 Bytes in size
 
 typedef struct {
   unsigned int inode;
   char filename[28];
 }
-dir_type; //32 Bytes long 
+dir_type; //32 Bytes long
+
+void out_smallfile(char* externalfile, char* v6_file, int needed_blocks);
+void in_smallfile(char* externalfile, char* v6_file, int needed_blocks, int file_size);
+unsigned int allocateFreeBlock();
 
 int file_descriptor;
 inode_type root_inode; // to store inode for the root
@@ -120,7 +124,7 @@ void createDirectory(int currInode,int prev, const char * dirName,  int iNodeNum
     int runningInode ;
     int rcount=0;
     read(file_descriptor,&runningInode, 4);
-    
+
     while(runningInode > 0){
       //lseek(file_descriptor, 4, SEEK_CUR);
       read(file_descriptor,&tempFileName,28);
@@ -169,8 +173,8 @@ void createDirectory(int currInode,int prev, const char * dirName,  int iNodeNum
     write(file_descriptor, &dir, 32);
     printf("Directory Created Successfully!!\n");
     }
-     
-    
+
+
 }
 unsigned int getInode(char * filename, unsigned int prevInode){
   char tempFileName[28];
@@ -239,10 +243,10 @@ void mkDir( const char * dirName, int iNodeNumber){
   int num;
   char str[80];
   char tempFileName[28];
-  
+
   char relPath[80];
   strcpy(str, dirName);
-  
+
   if(str[0] != '/'){
           if(strchr(str,'/')!=NULL){
               char* finalDirName = basename(str);
@@ -259,16 +263,16 @@ void mkDir( const char * dirName, int iNodeNumber){
                 }
                 if(currNode != -1){
                   createDirectory(currNode,prevNode,finalDirName,iNodeNumber);
-                  
+
                 }
              }
           }
           else{
-            createDirectory(currInode,currInode, dirName,iNodeNumber); 
+            createDirectory(currInode,currInode, dirName,iNodeNumber);
           }
-           
+
     }
-  
+
   else{
       char* finalDirName = basename(str);
       char* filename = strtok(str, "/");
@@ -286,7 +290,7 @@ void mkDir( const char * dirName, int iNodeNumber){
           createDirectory(currNode,prevNode,finalDirName,iNodeNumber);
         }
      }
-    
+
   }
 }
 
@@ -361,22 +365,22 @@ unsigned int getNewInode(){
   else{
     return count;
   }
-  
+
 }
 void cpout(char* externalfile, char* v6_file) {
   struct stat stats;
   stat(v6_file, &stats);
   int needed_blocks = stats.st_blocks;
 
-  out_smallFile(externalfile, v6_file, needed_blocks);
+  out_smallfile(externalfile, v6_file, needed_blocks);
 }
 
 void out_smallfile(char* externalfile, char* v6_file, int needed_blocks) {
   unsigned short buffer[512];
   int v6_fd = open(v6_file, O_RDONLY);
   unsigned short addr[8];
-  lseek(v6_fd, , SEEK_SET);
-  read(fdes, &addr, 16);
+  lseek(v6_fd, 1024, SEEK_SET);
+  read(v6_fd, &addr, 16);
   close(v6_fd);
   int externalfile_fd = creat(externalfile, 0775);
   externalfile_fd = open(externalfile, O_RDWR | O_APPEND);
@@ -399,23 +403,22 @@ void cpin(char* externalfile, char* v6_file) {
   int needed_blocks = stats.st_blocks;
   int file_size = stats.st_size;
 
-  in_smallFile(externalfile, v6_file, needed_blocks, file_size);
+  in_smallfile(externalfile, v6_file, needed_blocks, file_size);
 }
 unsigned int allocateFreeBlock() {
   unsigned int free_address;
   unsigned int buffer[512];
-  for(int i = 0; i < needed_blocks; i++) {
-    superBlock.nfree--;
-    if(superBlock.nfree > 0) {
-      if(superBlock.free[nfree] == 0) {
-        printf("Error, file system is full");
-        return;
-      }
-      else {
-        free_address = superBlock.free[nfree];
-      }
-    } else {
-      int next_free_block = superBlock.free[nfree];
+  superBlock.nfree--;
+  if(superBlock.nfree > 0) {
+    if(superBlock.free[superBlock.nfree] == 0) {
+      printf("Error, file system is full");
+      return 1;
+    }
+    else {
+        free_address = superBlock.free[superBlock.nfree];
+    }
+  } else {
+      int next_free_block = superBlock.free[superBlock.nfree];
       int free_block_address = next_free_block * 1024 + 2048 + superBlock.isize*1024;
       lseek(file_descriptor, free_block_address, 1024);
       read(file_descriptor, buffer, 1024);
@@ -423,16 +426,16 @@ unsigned int allocateFreeBlock() {
       for(int i = 0; i < 251; i++) {
         superBlock.free[i] = buffer[i+1];
       }
-      free_address = superBlock.free[nfree];
-    }
-    return free_address;
+      free_address = superBlock.free[superBlock.nfree];
+  }
+  return free_address;
 }
 
-void in_smallFile(char* externalfile, char* v6_file, int needed_blocks, int file_size) {
+void in_smallfile(char* externalfile, char* v6_file, int needed_blocks, int file_size) {
   inode_type new_inode;
   unsigned int free_address = allocateFreeBlock();
-  for(int i = 0; i < blocks_needed; i++) {
-    new_inode.free[i] = allocateFreeBlock();
+  for(int i = 0; i < needed_blocks; i++) {
+    new_inode.addr[i] = allocateFreeBlock();
   }
   new_inode.flags = 0100000;
   new_inode.size0 = 0;
@@ -440,8 +443,8 @@ void in_smallFile(char* externalfile, char* v6_file, int needed_blocks, int file
   new_inode.actime = 0;
   new_inode.modtime = 0;
   unsigned short buffer[512];
-  externalfile_fd = open(externalfile, O_RDONLY);
-	v6_fd = open(v6_file, O_RDWR | O_APPEND);
+  int externalfile_fd = open(externalfile, O_RDONLY);
+	int v6_fd = open(v6_file, O_RDWR | O_APPEND);
 	for(int i = 0; i <= needed_blocks; i++) {
 	  lseek(externalfile_fd, 1024*i , SEEK_SET);
 	  read(externalfile_fd, &buffer, 1024);
@@ -533,7 +536,7 @@ void initfs(int file_descriptor, int n1, int n2) {
 //****get_inode to return inode
 inode_type get_Inode(int inumber){
         inode_type inode;
-        int blockNumber = (inumber * 64) / 1024;    // need to remove 
+        int blockNumber = (inumber * 64) / 1024;    // need to remove
         int offset = (inumber * 64) % 1024;
         lseek(file_descriptor,(1024 * blockNumber) + offset, SEEK_SET);
         read(file_descriptor,&inode,64);
@@ -553,7 +556,7 @@ void writeToBlock (int blockNumber, void * buffer, int nbytes)
         write(file_descriptor,buffer,nbytes);
 }
 
-//addfreeblock 
+//addfreeblock
 void addFreeBlock(int blockNumber){
         if(superBlock.nfree == 251)
         {
@@ -666,7 +669,7 @@ int main() {
         cout << "Valid openfs command needs to be give before initfs. Please try again!" << endl;
       }
 
-    } 
+    }
     else if (inputVector[0] == "mkdir"){
         if (openfsValid != -1) {
           unsigned int dirInode = getNewInode();
