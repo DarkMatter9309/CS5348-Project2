@@ -173,9 +173,8 @@ void createDirectory(int currInode,int prev, const char * dirName,  int iNodeNum
     write(file_descriptor, &dir, 32);
     printf("Directory Created Successfully!!\n");
     }
-
-
 }
+
 unsigned int getInode(char * filename, unsigned int prevInode){
   char tempFileName[28];
   unsigned int  startAdd;
@@ -194,6 +193,7 @@ unsigned int getInode(char * filename, unsigned int prevInode){
       printf("No directory called %s found!! \n",filename);
     return -1;
 }
+
 void chanegDirectory(const char * dirName){
   char str[80];
   strcpy(str, dirName);
@@ -239,6 +239,7 @@ void chanegDirectory(const char * dirName){
      }
   }
 }
+
 void mkDir( const char * dirName, int iNodeNumber){
   int num;
   char str[80];
@@ -344,8 +345,6 @@ void create_root() {
   write(file_descriptor, & rootDir, 32);
 
   printf("Initailized the root directory and its inode Successfully!!\n");
-
-
 }
 
 unsigned int getNewInode(){
@@ -367,6 +366,7 @@ unsigned int getNewInode(){
   }
 
 }
+
 void cpout(char* externalfile, char* v6_file) {
   struct stat stats;
   stat(v6_file, &stats);
@@ -395,7 +395,6 @@ void out_smallfile(char* externalfile, char* v6_file, int needed_blocks) {
   close(v6_fd);
 }
 
-
 void cpin(char* externalfile, char* v6_file) {
   // stat struct provides information about file such as number of blocks needed and file size
   struct stat stats;
@@ -405,6 +404,7 @@ void cpin(char* externalfile, char* v6_file) {
 
   in_smallfile(externalfile, v6_file, needed_blocks, file_size);
 }
+
 unsigned int allocateFreeBlock() {
   unsigned int free_address;
   unsigned int buffer[512];
@@ -455,6 +455,7 @@ void in_smallfile(char* externalfile, char* v6_file, int needed_blocks, int file
 	close(v6_fd);
 	close(externalfile_fd);
 }
+
 unsigned int getFreeBlock() {
   unsigned int freeBlock;
   freeBlock = superBlock.free[--superBlock.nfree];
@@ -533,101 +534,75 @@ void initfs(int file_descriptor, int n1, int n2) {
   // }
 }
 
-//****get_inode to return inode
-inode_type get_Inode(int inumber){
-        inode_type inode;
-        int blockNumber = (inumber * 64) / 1024;    // need to remove
-        int offset = (inumber * 64) % 1024;
-        lseek(file_descriptor,(1024 * blockNumber) + offset, SEEK_SET);
-        read(file_descriptor,&inode,64);
-        return inode;
-}
-
-//removing block form offset
-void readFromBlockOffset(int blockNumber, int offset, void * buffer, int nbytes)
-{
-        lseek(file_descriptor,(1024 * blockNumber) + offset, SEEK_SET);
-        read(file_descriptor,buffer,nbytes);
-}
-
-void writeToBlock (int blockNumber, void * buffer, int nbytes)
-{
-        lseek(file_descriptor,1024 * blockNumber, SEEK_SET);
-        write(file_descriptor,buffer,nbytes);
-}
-
-//addfreeblock
-void addFreeBlock(int blockNumber){
-        if(superBlock.nfree == 251)
-        {
-                //write to the new block
-                writeToBlock(blockNumber, superBlock.free, 251 * 2);
-                superBlock.nfree = 0;
-        }
-        superBlock.free[superBlock.nfree] = blockNumber;
-        superBlock.nfree++;
-}
-
-void addFreeInode(int inumber){
-        if(superBlock.ninode == 251)
-                return;
-        superBlock.inode[superBlock.ninode] = inumber;
-        superBlock.ninode++;
-}
-
-void writeToBlock (int blockNumber, void * buffer, int nbytes)
-{
-        lseek(fd,1024 * blockNumber, SEEK_SET);
-        write(fd,buffer,nbytes);
-}
-
-void writeToBlockOffset(int blockNumber, int offset, void * buffer, int nbytes)
-{
-        lseek(fd,(1024 * blockNumber) + offset, SEEK_SET);
-        write(fd,buffer,nbytes);
-}
-
-void writeInode(int INumber, inode_type inode){
-        int blockNumber = (INumber * 64 )/ 1024;   //need to remove
-        int offset = (INumber * 64) % 1024;
-        writeToBlockOffset(blockNumber, offset, &inode, sizeof(inode_type));
-}
-
-//rm to remove file
-void rm(char* filename){
-        int blocknumber,x,i;
-        inode_type root_inode = get_Inode(currInode);
-        blocknumber = root_inode.addr[0];
-        dir_type directory[100];
-        readFromBlockOffset(blocknumber,0,directory,root_inode.size1);
-
-        for(i = 0; i < root_inode.size1/sizeof(dir_type); i++)
-        {
-                if(strcmp(filename,directory[i].filename)==0){
-                        inode_type file = get_Inode(directory[i].inode);
-                        if(file.flags ==(1<<15)){
-                                for(x = 0; x<file.size1/1024; x++)
-                                {
-                                        blocknumber = file.addr[x];
-                                        addFreeBlock(blocknumber);
-                                }
-                                if(0<file.size1%1024){
-                                        blocknumber = file.addr[x];
-                                        addFreeBlock(blocknumber);
-                                }
-                                addFreeInode(directory[i].inode);
-                                directory[i]=directory[(root_inode.size1/sizeof(dir_type))-1];
-                                root_inode.size1-=sizeof(dir_type);
-                                writeToBlock(root_inode.addr[0],directory,root_inode.size);
-                                writeInode(currInode,root_inode);
-                        }
-                        else{
-                                printf("\n%s\n","THIS IS NOT A FILE!!");
-                        }
-                        return;
-                }
-        }
-}
+////removing block form offset
+//void readFromBlockOffset(int blockNumber, int offset, void * buffer, int nbytes){
+//        lseek(file_descriptor,(1024 * blockNumber) + offset, SEEK_SET);
+//        read(file_descriptor,buffer,nbytes);
+//}
+//
+//void writeToBlock (int blockNumber, void * buffer, int nbytes){
+//        lseek(file_descriptor,1024 * blockNumber, SEEK_SET);
+//        write(file_descriptor,buffer,nbytes);
+//}
+//
+////addfreeblock
+//void addFreeBlock(int blockNumber){
+//        if(superBlock.nfree == 251)
+//        {
+//                //write to the new block
+//                writeToBlock(blockNumber, superBlock.free, 251 * 2);
+//                superBlock.nfree = 0;
+//        }
+//        superBlock.free[superBlock.nfree] = blockNumber;
+//        superBlock.nfree++;
+//}
+//
+//void writeToBlockOffset(int blockNumber, int offset, void * buffer, int nbytes){
+//        lseek(file_descriptor,(1024 * blockNumber) + offset, SEEK_SET);
+//        write(file_descriptor,buffer,nbytes);
+//}
+//
+//void writeInode(int INumber, inode_type inode){
+//        int blockNumber = (INumber * 64 )/ 1024;   //need to remove
+//        int offset = (INumber * 64) % 1024;
+//        writeToBlockOffset(blockNumber, offset, &inode, sizeof(inode_type));
+//}
+//
+////rm to remove file
+//void rm(char* filename){
+//        int blocknumber,x,i;
+//        inode_type root_inode = getInode(filename,currInode);
+//        blocknumber = root_inode.addr[0];
+//        dir_type directory[100];
+//        readFromBlockOffset(blocknumber,0,directory,root_inode.size1);
+//
+//        for(i = 0; i < root_inode.size1/sizeof(dir_type); i++)
+//        {
+//                if(strcmp(filename,directory[i].filename)==0){
+//                        inode_type file = getInode(filename,directory[i].inode);
+//                        if(file.flags ==(1<<15)){
+//                                for(x = 0; x<file.size1/1024; x++)
+//                                {
+//                                        blocknumber = file.addr[x];
+//                                        addFreeBlock(blocknumber);
+//                                }
+//                                if(0<file.size1%1024){
+//                                        blocknumber = file.addr[x];
+//                                        addFreeBlock(blocknumber);
+//                                }
+//                                getInode(filename, directory[i].inode);//add free inode
+//                                directory[i]=directory[(root_inode.size1/sizeof(dir_type))-1];
+//                                root_inode.size1-=sizeof(dir_type);
+//                                writeToBlock(root_inode.addr[0],directory,root_inode.size1);
+//                                writeInode(currInode,root_inode);
+//                        }
+//                        else{
+//                                printf("\n%s\n","THIS IS NOT A FILE!!");
+//                        }
+//                        return;
+//                }
+//        }
+//}
 
 int main() {
   cout << "Welcome User!" << endl;
@@ -690,19 +665,26 @@ int main() {
     }
     else if (inputVector[0] == "cpin"){
         if (openfsValid != -1) {
-          cpin(inputVector[1].c_str(),inputVector[2].c_str());
+          //const_cast<char*>(data.str().c_str())
+          //char *cstr = &str[0];
+          char *input1 = &inputVector[1][0];
+          char *input2 = &inputVector[2][0];
+          cpin(input1,input2);
         }
     }
     else if (inputVector[0] == "cpout"){
         if (openfsValid != -1) {
-          cpout(inputVector[1].c_str(),inputVector[2].c_str());
+          char *input1 = &inputVector[1][0];
+          char *input2 = &inputVector[2][0];
+          cpout(input1,input2);
         }
     }
-    else if (inputVector[0] == "rm"){
-        if (openfsValid != -1) {
-          rm(inputVector[1].c_str());
-        }
-    }
+//    else if (inputVector[0] == "rm"){
+//        if (openfsValid != -1) {
+//          char *input1 = &inputVector[1][0];
+//          rm(input1);
+//        }
+//    }
     else {
       cout << "Invalid Input! Please try again.!" << endl;
     }
