@@ -288,7 +288,6 @@ void mkDir( const char * dirName, int iNodeNumber){
      }
     
   }
-
 }
 
 int openfs(const char * file) {
@@ -531,6 +530,102 @@ void initfs(int file_descriptor, int n1, int n2) {
   // }
 }
 
+//****get_inode to return inode
+inode_type get_Inode(int inumber){
+        inode_type inode;
+        int blockNumber = (inumber * 64) / 1024;    // need to remove 
+        int offset = (inumber * 64) % 1024;
+        lseek(file_descriptor,(1024 * blockNumber) + offset, SEEK_SET);
+        read(file_descriptor,&inode,64);
+        return inode;
+}
+
+//removing block form offset
+void readFromBlockOffset(int blockNumber, int offset, void * buffer, int nbytes)
+{
+        lseek(file_descriptor,(1024 * blockNumber) + offset, SEEK_SET);
+        read(file_descriptor,buffer,nbytes);
+}
+
+void writeToBlock (int blockNumber, void * buffer, int nbytes)
+{
+        lseek(file_descriptor,1024 * blockNumber, SEEK_SET);
+        write(file_descriptor,buffer,nbytes);
+}
+
+//addfreeblock 
+void addFreeBlock(int blockNumber){
+        if(superBlock.nfree == 251)
+        {
+                //write to the new block
+                writeToBlock(blockNumber, superBlock.free, 251 * 2);
+                superBlock.nfree = 0;
+        }
+        superBlock.free[superBlock.nfree] = blockNumber;
+        superBlock.nfree++;
+}
+
+void addFreeInode(int inumber){
+        if(superBlock.ninode == 251)
+                return;
+        superBlock.inode[superBlock.ninode] = inumber;
+        superBlock.ninode++;
+}
+
+void writeToBlock (int blockNumber, void * buffer, int nbytes)
+{
+        lseek(fd,1024 * blockNumber, SEEK_SET);
+        write(fd,buffer,nbytes);
+}
+
+void writeToBlockOffset(int blockNumber, int offset, void * buffer, int nbytes)
+{
+        lseek(fd,(1024 * blockNumber) + offset, SEEK_SET);
+        write(fd,buffer,nbytes);
+}
+
+void writeInode(int INumber, inode_type inode){
+        int blockNumber = (INumber * 64 )/ 1024;   //need to remove
+        int offset = (INumber * 64) % 1024;
+        writeToBlockOffset(blockNumber, offset, &inode, sizeof(inode_type));
+}
+
+//rm to remove file
+void rm(char* filename){
+        int blocknumber,x,i;
+        inode_type root_inode = get_Inode(currInode);
+        blocknumber = root_inode.addr[0];
+        dir_type directory[100];
+        readFromBlockOffset(blocknumber,0,directory,root_inode.size1);
+
+        for(i = 0; i < root_inode.size1/sizeof(dir_type); i++)
+        {
+                if(strcmp(filename,directory[i].filename)==0){
+                        inode_type file = get_Inode(directory[i].inode);
+                        if(file.flags ==(1<<15)){
+                                for(x = 0; x<file.size1/1024; x++)
+                                {
+                                        blocknumber = file.addr[x];
+                                        addFreeBlock(blocknumber);
+                                }
+                                if(0<file.size1%1024){
+                                        blocknumber = file.addr[x];
+                                        addFreeBlock(blocknumber);
+                                }
+                                addFreeInode(directory[i].inode);
+                                directory[i]=directory[(root_inode.size1/sizeof(dir_type))-1];
+                                root_inode.size1-=sizeof(dir_type);
+                                writeToBlock(root_inode.addr[0],directory,root_inode.size);
+                                writeInode(currInode,root_inode);
+                        }
+                        else{
+                                printf("\n%s\n","THIS IS NOT A FILE!!");
+                        }
+                        return;
+                }
+        }
+}
+
 int main() {
   cout << "Welcome User!" << endl;
   cout << "You can exit anytime by typing q" << endl;
@@ -588,8 +683,23 @@ int main() {
     else if (inputVector[0] == "cd"){
         if (openfsValid != -1) {
           chanegDirectory(inputVector[1].c_str());
-          }
         }
+    }
+    else if (inputVector[0] == "cpin"){
+        if (openfsValid != -1) {
+          cpin(inputVector[1].c_str(),inputVector[2].c_str());
+        }
+    }
+    else if (inputVector[0] == "cpout"){
+        if (openfsValid != -1) {
+          cpout(inputVector[1].c_str(),inputVector[2].c_str());
+        }
+    }
+    else if (inputVector[0] == "rm"){
+        if (openfsValid != -1) {
+          rm(inputVector[1].c_str());
+        }
+    }
     else {
       cout << "Invalid Input! Please try again.!" << endl;
     }
