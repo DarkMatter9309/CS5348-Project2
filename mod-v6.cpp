@@ -438,6 +438,7 @@ void out_smallfile(char* externalfile, char* v6_file, int needed_blocks) {
     lseek(externalfile_fd, i*1024, SEEK_SET);
     write(externalfile_fd, &buffer, 1024);
   }
+  printf("Small file copied and exported\n");
   close(externalfile_fd);
   close(v6_fd);
 }
