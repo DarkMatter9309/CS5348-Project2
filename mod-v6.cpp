@@ -1,3 +1,50 @@
+
+/*
+Group-9 Project2-Part2
+
+GITHUB: https://github.com/DarkMatter9309/CS5348-Project2
+Team Members and Contributions
+
+Ameya Potey (ANP200000) - Worked on mkdir, cd file operations
+Li Wang (li.wang2@utdallas.edu) - Worked on cpin, cpout file operations
+Tejo Vardhan (txm200002) -  Worked on main, rm also worked on integrating all the modules.
+
+Instructions to compiler and run the program on cslab:
+
+Go to the file location
+
+>run g++ -o result mod-v6.cpp //you can replace result with a word of your choice
+>run ./result to start
+
+You should see the below message once you start the program succesfully:
+
+Welcome User!
+You can exit anytime by typing q
+
+You can give the following commands to try this program. Order needs to be followed for successful execution.
+
+1>openfs //filename should not be an existing file name
+2>initfs n1 n2 //where n1 and n2 need to be positive integers, invalid n1 and n2 values will lead to error
+3>cpin v6_testfile testfile.txt //testfile.txt should be a valid file name
+4>cpout new_testfile.txt v6_testfile //v6_testfile should be a valid file name
+5>mkdir dirname //dirname should be a valid directory name
+6>cd dirname //dirname should be a valid directory name
+7>rm v6_testfile //v6_testfile should be a valid file name
+8>q //or q to quit Enter user command!)
+
+For example:
+>openfs project2part1
+>initfs 100 50
+>cpin v6_testfile testfile.txt
+>cpout new_testfile.txt v6_testfile
+>mkdir directory1
+>cd directory1
+>rm v6_testfile
+>q //to quit the program
+
+You should see the files created in the appropriate directories after the program has completed executing.
+*/
+
 /*
 Group-9 Project2-Part1
 
