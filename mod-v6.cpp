@@ -432,15 +432,44 @@ unsigned int allocateFreeBlock() {
   return free_address;
 }
 
+void addEntryToCD(int currInode, const char* filename, int inodeNumber) {
+  int startAdd;
+  dir_type dir;
+  unsigned int inode = currInode;
+  char tempFileName[28];
+  int flag =1;
+  lseek(file_descriptor, 2048 + (inode-1)*64 +20, SEEK_SET);
+  read(file_descriptor,&startAdd, 4);
+  lseek(file_descriptor,startAdd*1024 , SEEK_SET);
+  int runningInode ;
+  int rcount=0;
+  read(file_descriptor,&runningInode, 4);
+  while(runningInode > 0){
+    //lseek(file_descriptor, 4, SEEK_CUR);
+      read(file_descriptor,&tempFileName,28);
+      // printf("File Name : %s\n",tempFileName);
+      if(strcmp(tempFileName,filename)==0){
+        printf("Directory Already Exists!!\n");
+        flag =0;
+      }
+      rcount++;
+      read(file_descriptor,&runningInode, 4);
+    }
+    if(flag ==1){
+       unsigned int dirBlock = getFreeBlock();
+      strcpy(dir.filename,filename);
+     dir.inode = inodeNumber;
+     lseek(file_descriptor,startAdd*1024 +rcount*32 , SEEK_SET);
+     write(file_descriptor,&dir, 32);
+    }
+}
+
 void in_smallfile(char* externalfile, char* v6_file, int needed_blocks, int file_size) {
   inode_type new_inode;
   for(int i = 0; i < needed_blocks; i++) {
     new_inode.addr[i] = allocateFreeBlock();
   }
   unsigned int inode_number = getNewInode();
-  dir_type new_file;
-  new_file.inode = inode_number;
-  strcpy(new_file.filename, v6_file);
   unsigned int free_address = new_inode.addr[0];
   new_inode.flags = 0100000;
   new_inode.size0 = 0;
@@ -449,6 +478,7 @@ void in_smallfile(char* externalfile, char* v6_file, int needed_blocks, int file
   new_inode.modtime = 0;
   lseek(file_descriptor, 2048 + (inode_number-1)*64, SEEK_SET);
   write(file_descriptor, &new_inode, 64);
+  addEntryToCD(currInode, v6_file, inode_number);
   unsigned short buffer[512];
   int externalfile_fd = open(externalfile, O_RDONLY);
 	for(int i = 0; i <= needed_blocks; i++) {
@@ -458,8 +488,6 @@ void in_smallfile(char* externalfile, char* v6_file, int needed_blocks, int file
 	  write(file_descriptor, &buffer, 1024);
 	}
 	printf("Small file copied\n");
-
-	close(v6_fd);
 	close(externalfile_fd);
 }
 
