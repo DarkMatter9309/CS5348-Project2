@@ -24,8 +24,8 @@ You can give the following commands to try this program. Order needs to be follo
 
 1>openfs filename //filename should not be an existing file name
 2>initfs n1 n2 //where n1 and n2 need to be positive integers, invalid n1 and n2 values will lead to error
-3>cpin v6_testfile testfile.txt //testfile.txt should be a valid file name
-4>cpout new_testfile.txt v6_testfile //v6_testfile should be a valid file name
+3>cpin testfile.txt v6_testfile //testfile.txt should be a valid file name
+4>cpout v6_testfile new_testfile.txt//v6_testfile should be a valid file name
 5>rm v6_testfile //v6_testfile should be a valid file name
 6>mkdir dirname //dirname should be a valid directory name
 7>cd dirname //dirname should be a valid directory name
@@ -721,8 +721,8 @@ int main()
   cout << "1. openfs <filename>" << endl;
   cout << "2. initfs n1 n2 where n1 and n2 need to be positive integers, invalid n1 and n2 values will lead to error" << endl;
   cout << "**testfile.txt is shipped alond with the project." << endl;
-  cout << "3. cpin v6_testfile testfile.txt" << endl;
-  cout << "4. cpout new_testfile.txt v6_testfile" << endl;
+  cout << "3. cpin testfile.txt v6_testfile" << endl;
+  cout << "4. cpout v6_testfile new_testfile.txt" << endl;
   cout << "5. rm v6_testfile" << endl;
   cout << "6. mkdir <dirname>" << endl;
   cout << "7. cd <dirname>" << endl;
