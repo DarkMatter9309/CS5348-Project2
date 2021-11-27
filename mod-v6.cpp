@@ -6,7 +6,7 @@ Team Members and Contributions
 
 Ameya Potey (ANP200000) - Worked on mkdir, cd file operations
 Li Wang (li.wang2@utdallas.edu) - Worked on cpin, cpout file operations
-Tejo Vardhan (txm200002) -  Worked on main, rm also worked on integrating all the modules.
+Tejo Vardhan (txm200002) -  Worked on main, rm, also worked on integrating all the modules.
 
 Instructions to compiler and run the program on cslab:
 
@@ -24,9 +24,9 @@ You can give the following commands to try this program. Order needs to be follo
 
 1>openfs filename //filename should not be an existing file name
 2>initfs n1 n2 //where n1 and n2 need to be positive integers, invalid n1 and n2 values will lead to error
-3>cpin testfile.txt v6_testfile //testfile.txt should be a valid file name
-4>cpout v6_testfile new_testfile.txt//v6_testfile should be a valid file name
-5>rm v6_testfile //v6_testfile should be a valid file name
+3>cpin text.txt v6_file //text.txt should be a valid file name
+4>cpout v6_file new_text.txt//v6_testfile should be a valid file name
+5>rm v6_file //v6_file should be a valid file name
 6>mkdir dirname //dirname should be a valid directory name
 7>cd dirname //dirname should be a valid directory name
 8>q //or q to quit Enter user command!)
@@ -34,11 +34,11 @@ You can give the following commands to try this program. Order needs to be follo
 For example:
 >openfs project2part2
 >initfs 100 50
->cpin v6_testfile testfile.txt
->cpout new_testfile.txt v6_testfile
->rm v6_testfile
->mkdir directory1
->cd directory1
+>cpin v6_file text.txt
+>cpout new_text.txt v6_testfile
+>rm v6_file
+>mkdir dirname1
+>cd dirname1
 >q //to quit the program
 
 You should see the files created in the appropriate directories after the program has completed executing.
@@ -77,7 +77,6 @@ For example:
 >openfs project2part1
 >initfs 100 50
 >q
-
 
 You should see a file with the given filename in the openfs command, in the same directory after the program has completed executing.
 */
@@ -230,11 +229,11 @@ unsigned int getInode(char *filename, unsigned int prevInode)
     }
     read(file_descriptor, &runningInode, 4);
   }
-  printf("No directory called %s found!! \n", filename);
+  printf("No directory/file called %s found!! \n", filename);
   return -1;
 }
 
-void chanegDirectory(const char *dirName)
+void changeDirectory(const char *dirName)
 {
   char str[80];
   strcpy(str, dirName);
@@ -673,57 +672,63 @@ void initfs(int file_descriptor, int n1, int n2)
 
 void addFreeBlock(int blockNumber)
 {
-  // if(superBlock.nfree == 251)
-  // {
-  //         //write to the new block
-  //         writeToBlock(blockNumber, superBlock.free, 251 * 2);
-  //         superBlock.nfree = 0;
-  // }
   superBlock.free[superBlock.nfree] = blockNumber;
   superBlock.nfree++;
 }
 
-// void writeToBlock (int blockNumber, void * buffer, int nbytes)
-// {
-//         lseek(file_descriptor,1024 * blockNumber, SEEK_SET);
-//         write(file_descriptor,buffer,nbytes);
-// }
+void writeToBlock (int blockNumber, void * buffer, int nbytes)
+{
+        lseek(file_descriptor,1024 * blockNumber, SEEK_SET);
+        write(file_descriptor,buffer,nbytes);
+}
 
 void rm(char *filename)
 {
-  int blockNumber, x, i, startaddress;
-  printf("%s\n", filename);
-  printf("%d\n", currInode);
-  unsigned int curINode = getInode(filename, currInode);
-  unsigned int inode = curINode;
-  printf("inode = %d\n", inode);
-  printf("curInode = %d\n", curINode);
-  if (curINode == -1)
+  struct stat stats;
+  stat(filename, &stats);
+  int needed_blocks = stats.st_blocks;
+  printf("needed blocks = %d\n", needed_blocks);
+  unsigned int fileInode = getInode(filename, currInode);
+  unsigned short buffer[512];
+  if (fileInode == -1)
   {
     printf("File does not exist!!\n");
     return;
   }
   else
   {
-    lseek(file_descriptor, 2048 + (inode - 1) * 64 + 20, SEEK_SET);
-    printf("inode after lseek = %d\n", inode);
-    read(file_descriptor, &startaddress, 4);
+    unsigned short addr[8];
+    int v6_fd = open(filename, O_RDWR);
+    lseek(v6_fd, 1024, SEEK_SET);
+    read(v6_fd, &addr, 16);
+    close(v6_fd);
+    unsigned short buffer[512]; //empty buffer
+    v6_fd = open(filename, O_RDONLY);
+    for (int i = 0; i < needed_blocks; i++)
+    { 
+      printf("Going through addr[%d] = %d\n", i, addr[i]);
+      lseek(v6_fd, 1024 * (addr[i]), SEEK_SET);
+      addFreeBlock(addr[i]);
+      writeToBlock(addr[i], buffer, 1024);
+    }
+    printf("File removed succesfully\n");
     return;
   }
 }
+
 
 int main()
 {
   cout << "Welcome User!" << endl;
   cout << "You can exit anytime by typing q" << endl;
-  cout << "You cannot give initfs before a valid openfs command is given" << endl;
-  cout << "You can give the following commands to try this program. Order needs to be followed" << endl;
+  cout << "You need to give a valid openfs command before any other command is given." << endl;
+  cout << "You can give the following commands to try this program!" << endl;
   cout << "1. openfs <filename>" << endl;
-  cout << "2. initfs n1 n2 where n1 and n2 need to be positive integers, invalid n1 and n2 values will lead to error" << endl;
-  cout << "**testfile.txt is shipped alond with the project." << endl;
-  cout << "3. cpin testfile.txt v6_testfile" << endl;
-  cout << "4. cpout v6_testfile new_testfile.txt" << endl;
-  cout << "5. rm v6_testfile" << endl;
+  cout << "2. initfs n1 n2   - where n1 and n2 need to be positive integers, invalid n1 and n2 values will lead to error" << endl;
+  cout << "**text.txt is shipped alond with the project." << endl;
+  cout << "3. cpin testfile.txt text" << endl;
+  cout << "4. cpout v6_file newtext.txt" << endl;
+  cout << "5. rm v6_file" << endl;
   cout << "6. mkdir <dirname>" << endl;
   cout << "7. cd <dirname>" << endl;
   cout << "8. q to quit" << endl;
@@ -790,7 +795,7 @@ int main()
     {
       if (openfsValid != -1)
       {
-        chanegDirectory(inputVector[1].c_str());
+        changeDirectory(inputVector[1].c_str());
       }
     }
     else if (inputVector[0] == "cpin")
