@@ -446,14 +446,14 @@ void cpout(char *v6_file, char *externalfile)
 void out_smallfile(char *externalfile, char *v6_file, int needed_blocks)
 {
   unsigned short buffer[512];
-  int v6_fd = open(v6_file, O_RDONLY);
+  int v6_fd = open(v6_file, O_RDONLY, S_IRUSR | S_IWUSR);
   unsigned short addr[8];
   lseek(v6_fd, 1024, SEEK_SET);
   read(v6_fd, &addr, 16);
   close(v6_fd);
   int externalfile_fd = creat(externalfile, 0775);
-  externalfile_fd = open(externalfile, O_RDWR | O_APPEND);
-  v6_fd = open(v6_file, O_RDONLY);
+  externalfile_fd = open(externalfile, O_RDWR | O_APPEND, S_IRUSR | S_IWUSR);
+  v6_fd = open(v6_file, O_RDONLY, S_IRUSR | S_IWUSR);
   for (int i = 0; i < needed_blocks; i++)
   {
     lseek(v6_fd, i * 1024, SEEK_SET);
@@ -564,7 +564,7 @@ void in_smallfile(char *externalfile, char *v6_file, int needed_blocks, int file
   write(file_descriptor, &new_inode, 64);
   addEntryToCD(currInode, v6_file, inode_number);
   unsigned short buffer[512];
-  int externalfile_fd = open(externalfile, O_RDONLY);
+  int externalfile_fd = open(externalfile, O_RDONLY, S_IRUSR | S_IWUSR);
   for (int i = 0; i <= needed_blocks; i++)
   {
     lseek(externalfile_fd, 1024 * i, SEEK_SET);
