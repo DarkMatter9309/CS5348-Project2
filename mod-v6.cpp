@@ -34,7 +34,7 @@ You can give the following commands to try this program. Order needs to be follo
 For example:
 >openfs project2part2
 >initfs 100 50
->cpin v6_file text.txt
+>cpin text.txt v6_file
 >cpout new_text.txt v6_file
 >rm v6_file
 >mkdir dirname1
