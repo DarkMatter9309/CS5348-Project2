@@ -555,7 +555,7 @@ void in_smallfile(char *externalfile, char *v6_file, int needed_blocks, int file
   }
   unsigned int inode_number = getNewInode();
   unsigned int free_address = new_inode.addr[0];
-  new_inode.flags = 0100000;
+  new_inode.flags = 0100000000000000077;
   new_inode.size0 = 0;
   new_inode.size1 = file_size;
   new_inode.actime = 0;
