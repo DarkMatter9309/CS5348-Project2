@@ -671,17 +671,17 @@ void initfs(int file_descriptor, int n1, int n2)
 
 //rm v6 file command and its methods
 
-// void addFreeBlock(int blockNumber)
-// {
-//   // if(superBlock.nfree == 251)
-//   // {
-//   //         //write to the new block
-//   //         writeToBlock(blockNumber, superBlock.free, 251 * 2);
-//   //         superBlock.nfree = 0;
-//   // }
-//   superBlock.free[superBlock.nfree] = blockNumber;
-//   superBlock.nfree++;
-// }
+void addFreeBlock(int blockNumber)
+{
+  // if(superBlock.nfree == 251)
+  // {
+  //         //write to the new block
+  //         writeToBlock(blockNumber, superBlock.free, 251 * 2);
+  //         superBlock.nfree = 0;
+  // }
+  superBlock.free[superBlock.nfree] = blockNumber;
+  superBlock.nfree++;
+}
 
 // void writeToBlock (int blockNumber, void * buffer, int nbytes)
 // {
@@ -689,28 +689,28 @@ void initfs(int file_descriptor, int n1, int n2)
 //         write(file_descriptor,buffer,nbytes);
 // }
 
-// void rm(char *filename)
-// {
-//   int blockNumber, x, i, startaddress;
-//   printf("%s\n", filename);
-//   printf("%d\n", currInode);
-//   unsigned int curINode = getInode(filename, currInode);
-//   unsigned int inode = curINode;
-//   printf("inode = %d\n", inode);
-//   printf("curInode = %d\n", curINode);
-//   if (curINode == -1)
-//   {
-//     printf("File does not exist!!\n");
-//     return;
-//   }
-//   else
-//   {
-//     lseek(file_descriptor, 2048 + (inode - 1) * 64 + 20, SEEK_SET);
-//     printf("inode after lseek = %d\n", inode);
-//     read(file_descriptor, &startaddress, 4);
-//     return;
-//   }
-// }
+void rm(char *filename)
+{
+  int blockNumber, x, i, startaddress;
+  printf("%s\n", filename);
+  printf("%d\n", currInode);
+  unsigned int curINode = getInode(filename, currInode);
+  unsigned int inode = curINode;
+  printf("inode = %d\n", inode);
+  printf("curInode = %d\n", curINode);
+  if (curINode == -1)
+  {
+    printf("File does not exist!!\n");
+    return;
+  }
+  else
+  {
+    lseek(file_descriptor, 2048 + (inode - 1) * 64 + 20, SEEK_SET);
+    printf("inode after lseek = %d\n", inode);
+    read(file_descriptor, &startaddress, 4);
+    return;
+  }
+}
 
 int main()
 {
@@ -813,14 +813,14 @@ int main()
         cpout(input1, input2);
       }
     }
-    // else if (inputVector[0] == "rm")
-    // {
-    //   if (openfsValid != -1)
-    //   {
-    //     char *input1 = &inputVector[1][0];
-    //     rm(input1);
-    //   }
-    // }
+    else if (inputVector[0] == "rm")
+    {
+      if (openfsValid != -1)
+      {
+        char *input1 = &inputVector[1][0];
+        rm(input1);
+      }
+    }
     else
     {
       cout << "Invalid Input! Please try again.!" << endl;
