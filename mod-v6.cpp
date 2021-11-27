@@ -734,7 +734,7 @@ int main()
   int finished = 0;
   vector<string> userInputsVector;
   string userInput;
-  int openfsValid = 0;
+  int openfsValid = -1;
   while (!finished)
   {
     cout << "Enter user command!" << endl;
@@ -789,12 +789,20 @@ int main()
           mkDir(inputVector[1].c_str(), dirInode);
         }
       }
+      else
+      {
+        cout << "File System has to be initialized before mkdir!!" << endl;
+      }
     }
     else if (inputVector[0] == "cd")
     {
       if (openfsValid != -1)
       {
         changeDirectory(inputVector[1].c_str());
+      }
+      else
+      {
+        cout << "File System has to be initialized before cd!!" << endl;
       }
     }
     else if (inputVector[0] == "cpin")
@@ -807,7 +815,12 @@ int main()
         char *input2 = &inputVector[2][0];
         cpin(input1, input2);
       }
+      else
+      {
+        cout << "File System has to be initialized before cpin!!" << endl;
+      }
     }
+
     else if (inputVector[0] == "cpout")
     {
       if (openfsValid != -1)
@@ -816,6 +829,10 @@ int main()
         char *input2 = &inputVector[2][0];
         cpout(input1, input2);
       }
+      else
+      {
+        cout << "File System has to be initialized before cpout!!" << endl;
+      }
     }
     else if (inputVector[0] == "rm")
     {
@@ -823,6 +840,10 @@ int main()
       {
         char *input1 = &inputVector[1][0];
         rm(input1);
+      }
+      else
+      {
+        cout << "File System has to be initialized before rm!!" << endl;
       }
     }
     else
