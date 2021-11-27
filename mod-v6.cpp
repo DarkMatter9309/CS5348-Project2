@@ -25,7 +25,7 @@ You can give the following commands to try this program. Order needs to be follo
 1>openfs filename //filename should not be an existing file name
 2>initfs n1 n2 //where n1 and n2 need to be positive integers, invalid n1 and n2 values will lead to error
 3>cpin text.txt v6_file //text.txt should be a valid file name
-4>cpout v6_file new_text.txt//v6_testfile should be a valid file name
+4>cpout v6_file new_text.txt//v6_file should be a valid file name
 5>rm v6_file //v6_file should be a valid file name
 6>mkdir dirname //dirname should be a valid directory name
 7>cd dirname //dirname should be a valid directory name
@@ -35,7 +35,7 @@ For example:
 >openfs project2part2
 >initfs 100 50
 >cpin v6_file text.txt
->cpout new_text.txt v6_testfile
+>cpout new_text.txt v6_file
 >rm v6_file
 >mkdir dirname1
 >cd dirname1
@@ -687,7 +687,6 @@ void rm(char *filename)
   struct stat stats;
   stat(filename, &stats);
   int needed_blocks = stats.st_blocks;
-  printf("needed blocks = %d\n", needed_blocks);
   unsigned int fileInode = getInode(filename, currInode);
   unsigned short buffer[512];
   if (fileInode == -1)
@@ -705,13 +704,13 @@ void rm(char *filename)
     unsigned short buffer[512]; //empty buffer
     v6_fd = open(filename, O_RDONLY);
     for (int i = 0; i < needed_blocks; i++)
-    { 
-      printf("Going through addr[%d] = %d\n", i, addr[i]);
+    { //free the blocks
       lseek(v6_fd, 1024 * (addr[i]), SEEK_SET);
       addFreeBlock(addr[i]);
       writeToBlock(addr[i], buffer, 1024);
     }
-    printf("File removed succesfully\n");
+    printf("Removed file %s successfully\n", filename);
+    
     return;
   }
 }
@@ -726,7 +725,7 @@ int main()
   cout << "1. openfs <filename>" << endl;
   cout << "2. initfs n1 n2   - where n1 and n2 need to be positive integers, invalid n1 and n2 values will lead to error" << endl;
   cout << "**text.txt is shipped alond with the project." << endl;
-  cout << "3. cpin testfile.txt text" << endl;
+  cout << "3. cpin text.txt v6_file" << endl;
   cout << "4. cpout v6_file newtext.txt" << endl;
   cout << "5. rm v6_file" << endl;
   cout << "6. mkdir <dirname>" << endl;
