@@ -439,8 +439,8 @@ void cpout(char *v6_file, char *externalfile)
   struct stat stats;
   stat(v6_file, &stats);
   int needed_blocks = stats.st_blocks;
-
-  out_smallfile(externalfile, v6_file, needed_blocks);
+  //out_smallfile(externalfile, v_6file, needed_blocks);
+  out_smallfile(externalfile, v6_file, 3);
 }
 
 void out_smallfile(char *externalfile, char *v6_file, int needed_blocks)
@@ -473,8 +473,8 @@ void cpin(char *externalfile, char *v6_file)
   stat(externalfile, &stats);
   int needed_blocks = stats.st_blocks;
   int file_size = stats.st_size;
-
-  in_smallfile(externalfile, v6_file, needed_blocks, file_size);
+  //in_smallfile(externalfile, needed_blocks, v_6file);
+  in_smallfile(externalfile, v6_file, 3, file_size);
 }
 
 unsigned int allocateFreeBlock()
